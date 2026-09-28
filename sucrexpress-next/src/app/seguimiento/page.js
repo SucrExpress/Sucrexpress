@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import styles from './seguimiento.module.css'
+import CopiarEnlace from './CopiarEnlace'
 
 export const metadata = {
   title: 'Seguimiento de envíos | SucreExpress',
@@ -12,6 +13,18 @@ const etapas = [
   { estado: 'en_ruta', nombre: 'En ruta', detalle: 'Tu paquete está en camino.' },
   { estado: 'entregado', nombre: 'Entregado', detalle: 'La entrega se completó.' },
 ]
+
+/**
+ * Normaliza estados de BD al estado canónico de la línea de progreso.
+ * `en_transito` y `en_ruta` son semánticamente equivalentes para el cliente;
+ * los representamos siempre como «En ruta» sin modificar el valor almacenado.
+ */
+function normalizarEstado(estado) {
+  if (!estado) return estado
+  const s = estado.toLowerCase()
+  if (s === 'en_transito') return 'en_ruta'
+  return s
+}
 
 function fechaLegible(valor) {
   if (!valor) return 'Aún no disponible'
@@ -53,8 +66,10 @@ export default async function SeguimientoPage({ searchParams }) {
   const consultado = Object.hasOwn(parametros, 'guia')
   const resultado = consultado ? await consultarGuia(guia) : null
   const paquete = resultado?.tipo === 'encontrada' ? resultado.paquete : null
-  const estado = paquete?.estado?.toLowerCase()
-  const etapaActual = etapas.findIndex((etapa) => etapa.estado === estado)
+
+  // Normalizar: en_transito → en_ruta (solo para la presentación)
+  const estadoNormalizado = normalizarEstado(paquete?.estado)
+  const etapaActual = etapas.findIndex((etapa) => etapa.estado === estadoNormalizado)
 
   return (
     <main className={styles.page}>
@@ -130,12 +145,16 @@ export default async function SeguimientoPage({ searchParams }) {
                     <span className={styles.cardLabel}>NÚMERO DE GUÍA</span>
                     <h2>{paquete.numero_guia}</h2>
                   </div>
-                  <span className={`${styles.statusBadge} ${estado === 'fallido' ? styles.statusBadgeWarning : ''}`}>
-                    {estado === 'fallido' ? 'Entrega no completada' : etapas[etapaActual]?.nombre || 'Estado en revisión'}
-                  </span>
+                  <div className={styles.resultHeaderRight}>
+                    <span className={`${styles.statusBadge} ${estadoNormalizado === 'fallido' ? styles.statusBadgeWarning : ''}`}>
+                      {estadoNormalizado === 'fallido' ? 'Entrega no completada' : etapas[etapaActual]?.nombre || 'Estado en revisión'}
+                    </span>
+                    {/* Botón accesible: copia solo /seguimiento?guia=... sin datos personales */}
+                    <CopiarEnlace numeroGuia={paquete.numero_guia} />
+                  </div>
                 </div>
 
-                {estado === 'fallido' ? (
+                {estadoNormalizado === 'fallido' ? (
                   <p className={styles.incident}>La entrega no pudo completarse. Contacta a SucreExpress e indica tu número de guía para recibir ayuda.</p>
                 ) : etapaActual >= 0 ? (
                   <ol className={styles.timeline} aria-label="Progreso del envío">
