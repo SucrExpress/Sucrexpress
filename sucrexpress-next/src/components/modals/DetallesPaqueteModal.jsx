@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   IoCloseOutline, 
   IoCubeOutline, 
@@ -7,11 +7,36 @@ import {
   IoPersonOutline,
   IoCashOutline,
   IoScaleOutline,
-  IoCalendarOutline
+  IoCalendarOutline,
+  IoCopyOutline,
+  IoCheckmarkOutline,
+  IoWarningOutline
 } from 'react-icons/io5';
 import '../../assets/styles/modals.css';
 
 const DetallesPaqueteModal = ({ isOpen, paquete, onClose }) => {
+  // Estado para la accion de copiar enlace: null | 'copiado' | 'error'
+  const [estadoCopia, setEstadoCopia] = useState(null);
+
+  /**
+   * Copia al portapapeles la URL publica de seguimiento de este paquete.
+   * Solo incluye el numero de guia; ningun dato del destinatario.
+   */
+  const copiarEnlaceSeguimiento = async () => {
+    try {
+      const url =
+        window.location.origin +
+        '/seguimiento?guia=' +
+        encodeURIComponent(paquete?.numero_guia ?? '');
+      await navigator.clipboard.writeText(url);
+      setEstadoCopia('copiado');
+      setTimeout(() => setEstadoCopia(null), 2500);
+    } catch {
+      setEstadoCopia('error');
+      setTimeout(() => setEstadoCopia(null), 3000);
+    }
+  };
+
   if (!isOpen || !paquete) return null;
 
   const formatFecha = (fecha) => {
@@ -27,13 +52,15 @@ const DetallesPaqueteModal = ({ isOpen, paquete, onClose }) => {
 
   const getEstadoBadge = (estado) => {
     const badges = {
-      pendiente: { class: 'badge-warning', text: 'Pendiente' },
-      asignado: { class: 'badge-info', text: 'Asignado' },
-      en_transito: { class: 'badge-primary', text: 'En Tránsito' },
-      entregado: { class: 'badge-success', text: 'Entregado' },
-      fallido: { class: 'badge-danger', text: 'Fallido' }
+      pendiente:   { class: 'badge-warning', text: 'Pendiente' },
+      asignado:    { class: 'badge-info',    text: 'Asignado' },
+      // en_ruta es el valor actual en BD; en_transito es el valor heredado
+      en_ruta:     { class: 'badge-primary', text: 'En ruta' },
+      en_transito: { class: 'badge-primary', text: 'En ruta' },
+      entregado:   { class: 'badge-success', text: 'Entregado' },
+      fallido:     { class: 'badge-danger',  text: 'Fallido' }
     };
-    
+
     const badge = badges[estado] || badges.pendiente;
     return <span className={`badge ${badge.class}`}>{badge.text}</span>;
   };
@@ -63,7 +90,29 @@ const DetallesPaqueteModal = ({ isOpen, paquete, onClose }) => {
             <div className="detalles-grid">
               <div className="detalles-item">
                 <label>Número de Guía</label>
-                <p className="detalles-value font-bold">{paquete.numero_guia}</p>
+                <div className="detalles-guia-row">
+                  <p className="detalles-value font-bold detalles-guia-num">
+                    {paquete.numero_guia}
+                  </p>
+                  <button
+                    id="btn-copiar-enlace-seguimiento"
+                    type="button"
+                    className={`btn-copiar-seguimiento${
+                      estadoCopia === 'copiado' ? ' btn-copiar-ok' : ''
+                    }${estadoCopia === 'error' ? ' btn-copiar-err' : ''}`}
+                    onClick={copiarEnlaceSeguimiento}
+                    aria-label="Copiar enlace de seguimiento"
+                    title="Copiar enlace de seguimiento publico"
+                  >
+                    {estadoCopia === 'copiado' ? (
+                      <><IoCheckmarkOutline size={15} aria-hidden="true" /> Copiado</>
+                    ) : estadoCopia === 'error' ? (
+                      <><IoWarningOutline size={15} aria-hidden="true" /> Error al copiar</>
+                    ) : (
+                      <><IoCopyOutline size={15} aria-hidden="true" /> Copiar enlace</>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="detalles-item">
                 <label>Estado</label>
