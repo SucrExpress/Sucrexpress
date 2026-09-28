@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { CreatePaqueteDto } from './dto/create-paquete.dto';
@@ -18,7 +19,9 @@ export class PaquetesService {
     if (filters.estado) query = query.eq('estado', filters.estado);
     if (filters.ciudad) query = query.eq('ciudad_destino', filters.ciudad);
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query.order('created_at', {
+      ascending: false,
+    });
     if (error) throw new BadRequestException(error.message);
     return { success: true, data: data || [] };
   }
@@ -41,15 +44,43 @@ export class PaquetesService {
       throw new BadRequestException('Número de guía inválido');
     }
 
-    const admin = this.supabase.getAdmin();
-    const { data, error } = await admin
-      .from('paquetes')
-      .select('numero_guia, estado, ciudad_destino, created_at, updated_at, fecha_asignacion, fecha_entrega')
-      .eq('numero_guia', guia)
-      .maybeSingle();
+    let data: Record<string, unknown> | null;
+    try {
+      const admin = this.supabase.getAdmin();
+      const result = await admin
+        .from('paquetes')
+        .select(
+          'numero_guia, estado, ciudad_destino, created_at, updated_at, fecha_asignacion, fecha_entrega',
+        )
+        .eq('numero_guia', guia)
+        .maybeSingle();
 
-    if (error) throw new BadRequestException('No se pudo consultar el seguimiento');
-    if (!data) throw new NotFoundException('No se encontró un envío con ese número de guía');
+      // { error } estructural de Supabase
+      if (result.error) {
+        throw new ServiceUnavailableException(
+          'Servicio no disponible. Intente más tarde.',
+        );
+      }
+      data = result.data;
+    } catch (err: unknown) {
+      // Re-lanzar excepciones de negocio intactas (BadRequest, NotFound, ServiceUnavailable…)
+      if (
+        err instanceof BadRequestException ||
+        err instanceof NotFoundException ||
+        err instanceof ServiceUnavailableException
+      ) {
+        throw err;
+      }
+      // Cualquier otro fallo del cliente Supabase (promesa rechazada, red, timeout…)
+      throw new ServiceUnavailableException(
+        'Servicio no disponible. Intente más tarde.',
+      );
+    }
+
+    if (!data)
+      throw new NotFoundException(
+        'No se encontró un envío con ese número de guía',
+      );
 
     return {
       success: true,
@@ -101,11 +132,12 @@ export class PaquetesService {
       nro_pedido_cliente: nroPedidoCliente,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      ...(dto.latitud_destino && dto.longitud_destino && {
-        latitud_destino: dto.latitud_destino,
-        longitud_destino: dto.longitud_destino,
-        geocodificado_at: new Date().toISOString(),
-      }),
+      ...(dto.latitud_destino &&
+        dto.longitud_destino && {
+          latitud_destino: dto.latitud_destino,
+          longitud_destino: dto.longitud_destino,
+          geocodificado_at: new Date().toISOString(),
+        }),
     };
 
     const { data: paquete, error } = await admin
@@ -114,7 +146,8 @@ export class PaquetesService {
       .select()
       .single();
 
-    if (error) throw new BadRequestException(`Error al crear paquete: ${error.message}`);
+    if (error)
+      throw new BadRequestException(`Error al crear paquete: ${error.message}`);
 
     // Generar QR
     let qrCode: string | null = null;
@@ -184,7 +217,9 @@ export class PaquetesService {
 
     if (!paquete) throw new NotFoundException('Paquete no encontrado');
     if (paquete.estado !== 'pendiente') {
-      throw new BadRequestException('Solo se pueden eliminar paquetes pendientes');
+      throw new BadRequestException(
+        'Solo se pueden eliminar paquetes pendientes',
+      );
     }
 
     const { error } = await admin.from('paquetes').delete().eq('id', id);
@@ -206,7 +241,10 @@ export class PaquetesService {
     return { success: true, data: data || [] };
   }
 
-  async asignar(id: string, body: { repartidor_id: string; repartidor_nombre: string }) {
+  async asignar(
+    id: string,
+    body: { repartidor_id: string; repartidor_nombre: string },
+  ) {
     const admin = this.supabase.getAdmin();
 
     const { data: paquete } = await admin
@@ -223,7 +261,9 @@ export class PaquetesService {
       );
     }
     if (paquete.estado !== 'asignado') {
-      throw new BadRequestException('Este paquete ya no está disponible para asignar');
+      throw new BadRequestException(
+        'Este paquete ya no está disponible para asignar',
+      );
     }
 
     const { data, error } = await admin
@@ -268,7 +308,9 @@ export class PaquetesService {
     const admin = this.supabase.getAdmin();
     const { data: paquete } = await admin
       .from('paquetes')
-      .select('id, numero_guia, nombre_destinatario, apellido_destinatario, ciudad_destino, direccion_exacta, numero_casa, qr_code')
+      .select(
+        'id, numero_guia, nombre_destinatario, apellido_destinatario, ciudad_destino, direccion_exacta, numero_casa, qr_code',
+      )
       .eq('id', id)
       .single();
 
@@ -289,7 +331,10 @@ export class PaquetesService {
       numero_casa: paquete.numero_casa,
     });
 
-    const qrCode = await QRCode.toDataURL(qrData, { errorCorrectionLevel: 'H', width: 300 });
+    const qrCode = await QRCode.toDataURL(qrData, {
+      errorCorrectionLevel: 'H',
+      width: 300,
+    });
 
     await admin
       .from('paquetes')
