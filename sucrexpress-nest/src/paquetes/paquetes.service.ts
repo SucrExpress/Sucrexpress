@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { SupabaseService } from '../common/supabase/supabase.service';
 import { CreatePaqueteDto } from './dto/create-paquete.dto';
@@ -48,7 +49,7 @@ export class PaquetesService {
       .eq('numero_guia', guia)
       .maybeSingle();
 
-    if (error) throw new BadRequestException('No se pudo consultar el seguimiento');
+    if (error) throw new ServiceUnavailableException('Servicio no disponible. Intente más tarde.');
     if (!data) throw new NotFoundException('No se encontró un envío con ese número de guía');
 
     return {
