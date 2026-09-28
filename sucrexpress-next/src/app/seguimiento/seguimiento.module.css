@@ -76,7 +76,31 @@
 .resultHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 34px 34px 26px; border-bottom: 1px solid #e9eff2; }
 .cardLabel { color: #708494; font-size: 11px; font-weight: 800; letter-spacing: .13em; }
 .resultHeader h2 { margin: 8px 0 0; overflow-wrap: anywhere; color: #16344c; font-size: 25px; font-weight: 800; }
-.statusBadge { flex: none; padding: 9px 13px; border-radius: 999px; background: #e4f5ef; color: #137462; font-size: 12px; font-weight: 800; }
+.resultHeaderRight { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.statusBadge { padding: 9px 13px; border-radius: 999px; background: #e4f5ef; color: #137462; font-size: 12px; font-weight: 800; }
+
+/* Botón «Copiar enlace» */
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #cbd9e2;
+  border-radius: 8px;
+  background: #fff;
+  color: #345a72;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.copyBtn:hover:not(:disabled) { background: #f0f7fa; border-color: #198c79; color: #137462; }
+.copyBtn:focus-visible { outline: 3px solid rgba(25, 140, 121, .35); outline-offset: 2px; }
+.copyBtn:disabled { cursor: default; }
+.copyBtnOk { background: #e4f5ef; border-color: #198c79; color: #137462; }
+.copyBtnErr { background: #fff3e2; border-color: #e89542; color: #81531c; }
+.copyIcon { font-size: 14px; line-height: 1; }
 .statusBadgeWarning { background: #fff0dc; color: #8a5619; }
 .timeline { display: grid; gap: 0; margin: 0; padding: 30px 34px 24px; list-style: none; }
 .timeline li { position: relative; display: flex; gap: 16px; min-height: 68px; }
@@ -114,6 +138,7 @@
   .searchRow button { width: 100%; }
   .emptyCard, .messageCard { padding: 30px; }
   .resultHeader { flex-direction: column; padding: 26px; }
+  .resultHeaderRight { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .timeline { padding: 26px 26px 18px; }
   .details { margin: 0 26px; }
   .privacyNote { padding: 16px 26px; }
