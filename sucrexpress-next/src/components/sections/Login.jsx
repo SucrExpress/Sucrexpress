@@ -2,6 +2,7 @@
 // src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import apiClient from '@/lib/apiClient';
@@ -428,7 +429,11 @@ const SucreExpressLogin = () => {
                 'Logearse'
               )}
             </button>
-            <p className="login-text">Logearse con diferentes plataformas:</p>
+            <p className="login-text">
+              <Link href="/seguimiento" style={{ color: '#fff', textDecoration: 'underline' }}>
+                Consultar el estado de un envío
+              </Link>
+            </p>
           </form>
         </div>
 

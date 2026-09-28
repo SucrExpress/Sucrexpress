@@ -35,6 +35,36 @@ export class PaquetesService {
     return { success: true, data };
   }
 
+  async getSeguimiento(numeroGuia: string) {
+    const guia = numeroGuia.trim();
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$/.test(guia)) {
+      throw new BadRequestException('Número de guía inválido');
+    }
+
+    const admin = this.supabase.getAdmin();
+    const { data, error } = await admin
+      .from('paquetes')
+      .select('numero_guia, estado, ciudad_destino, created_at, updated_at, fecha_asignacion, fecha_entrega')
+      .eq('numero_guia', guia)
+      .maybeSingle();
+
+    if (error) throw new BadRequestException('No se pudo consultar el seguimiento');
+    if (!data) throw new NotFoundException('No se encontró un envío con ese número de guía');
+
+    return {
+      success: true,
+      data: {
+        numero_guia: data.numero_guia,
+        estado: data.estado,
+        ciudad_destino: data.ciudad_destino,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        fecha_asignacion: data.fecha_asignacion,
+        fecha_entrega: data.fecha_entrega,
+      },
+    };
+  }
+
   async create(dto: CreatePaqueteDto) {
     const admin = this.supabase.getAdmin();
 
