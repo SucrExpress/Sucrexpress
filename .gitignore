@@ -34,6 +34,8 @@ yarn-error.log*
 
 # Misc
 *.pem
+# Claves de la VM de la práctica; nunca se incluyen en Git ni en Docker.
+Practica3.1/
 .vercel
 .yarn/*
 !.yarn/patches
