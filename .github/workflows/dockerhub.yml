@@ -47,6 +47,9 @@ jobs:
           context: ./sucrexpress-next
           file: ./sucrexpress-next/Dockerfile
           push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/sucrexpress-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/sucrexpress-web:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_NEST_API_URL=/backend
             NEXT_PUBLIC_GOOGLE_MAPS_KEY=${{ vars.NEXT_PUBLIC_GOOGLE_MAPS_KEY }}
