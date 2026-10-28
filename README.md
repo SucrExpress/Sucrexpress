@@ -29,7 +29,7 @@ SucreExpress3.0/
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/retr0max309/Sucrexpress.git
+git clone https://github.com/SucrExpress/Sucrexpress.git
 cd Sucrexpress
 git checkout dev
 ```
@@ -88,3 +88,7 @@ npm run dev
 - Los archivos `.env` **NO** se suben al repositorio por seguridad.
 - Usa los archivos `.env.example` como referencia para configurar tus variables.
 - La base de datos está en Supabase (nube), no requiere instalación local.
+
+## 🐳 Práctica 3.1 con Docker
+
+La web y la API se construyen como imágenes separadas y se ejecutan juntas con Docker Compose. Las instrucciones de Docker Desktop, publicación en Docker Hub y despliegue posterior en OCI están en [PRACTICA_3_1_DOCKER.md](PRACTICA_3_1_DOCKER.md).

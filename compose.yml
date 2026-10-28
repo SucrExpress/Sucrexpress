@@ -1,0 +1,40 @@
+name: sucrexpress-practica31
+
+services:
+  api:
+    image: ${DOCKERHUB_NAMESPACE:-sucrexpress}/sucrexpress-api:${IMAGE_TAG:-local}
+    build:
+      context: ./sucrexpress-nest
+    env_file:
+      - ${API_ENV_FILE:-./sucrexpress-nest/.env}
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    restart: unless-stopped
+    networks:
+      - internal
+
+  web:
+    image: ${DOCKERHUB_NAMESPACE:-sucrexpress}/sucrexpress-web:${IMAGE_TAG:-local}
+    build:
+      context: ./sucrexpress-next
+      args:
+        NEXT_PUBLIC_NEST_API_URL: /backend
+        NEXT_PUBLIC_GOOGLE_MAPS_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_KEY:-}
+    env_file:
+      - ${WEB_ENV_FILE:-./sucrexpress-next/.env}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEST_API_URL: http://api:3001
+    ports:
+      - ${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:3000
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - internal
+
+networks:
+  internal:
